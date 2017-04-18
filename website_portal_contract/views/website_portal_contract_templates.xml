@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2017 LasLabs Inc.
+     License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl). -->
+
+<odoo>
+
+    <template id="portal_my_home_menu_contracts" name="Portal Home Contracts" inherit_id="website_portal.portal_layout" priority="25">
+        <xpath expr="//ul[contains(@class,'o_portal_submenu')]" position="inside">
+            <li>
+                <a href="/my/contracts">Contracts</a>
+            </li>
+        </xpath>
+    </template>
+
+    <template id="portal_my_home_contracts" name="portal.my.home.contracts" inherit_id="website_portal.portal_my_home" priority="25">
+        <xpath expr="//div[contains(@class,'o_my_home_content')]" position="inside">
+            <h3 class="page-header">
+                <a href="/my/contracts">Your Contracts
+                    <small class="ml8">
+                        <t t-if="contract_count">
+                            <span class='badge'><t t-esc="contract_count" /></span>
+                        </t>
+                        <t t-if="not contract_count">
+                            There are currently no contracts for your account.
+                        </t>
+                    </small>
+                </a>
+            </h3>
+        </xpath>
+    </template>
+
+    <template id="portal_my_contracts" name="My Contracts">
+        <t t-call="website_portal.portal_layout">
+            <h3 class="page-header">Your Contracts</h3>
+            <t t-if="not contracts">
+                <p>There are currently no contracts for your account.</p>
+            </t>
+            <t t-if="contracts">
+                <table class="table table-hover o_my_status_table">
+                    <thead>
+                        <tr class="active">
+                            <th>Account</th>
+                            <th>Debit</th>
+                            <th>Credit</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <t t-foreach="contracts" t-as="contract">
+                        <tr>
+                            <td>
+                                <a t-attf-href="/contract/#{contract.id}?#{keep_query()}"><t t-esc="contract.display_name" /></a>
+                            </td>
+                            <td>
+                                <span t-field="contract.debit" />
+                            </td>
+                            <td>
+                                <span t-field="contract.credit" />
+                            </td>
+                            <td>
+                                <span t-field="contract.balance" />
+                            </td>
+                        </tr>
+                    </t>
+                </table>
+                <div t-if="pager" class="o_portal_pager text-center">
+                    <t t-call="website.pager" />
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Complete page of the contract -->
+    <template id="website_contract" name="Website Contract">
+        <t t-call="website.layout">
+            <body data-spy="scroll" data-target=".navspy" data-offset="50">
+                <div class="container o_website_quote">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <ol class="breadcrumb mt8">
+                                <li><a href="/my/home"><i class="fa fa-home" /></a></li>
+                                <li><a t-attf-href="/my/contracts">My Contracts</a></li>
+                                <li>
+                                    <t t-esc="contract.name" />
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="row mt16">
+                        <!-- Sidebar -->
+                        <div class="col-md-3 hidden-print">
+                            <div class="bs-sidebar">
+                                <div class="text-center" style="padding: 10px">
+                                    <div class="mt8 bs-header">
+                                        <div>
+                                            <a href="#discussion">
+                                                Give Feedback
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr class="mt0 mb0" />
+                                <t t-call="website_portal_contract.contract_navigation_menu" />
+                                <hr class="mt0 mb0" />
+                                <div class="bs-footer" />
+                            </div>
+                        </div>
+                        <!-- Page content -->
+                        <div id="contract_page_content" class="col-md-9">
+                            <t t-call="website_portal_contract.contract_content" />
+                        </div>
+                    </div>
+                </div>
+            </body>
+        </t>
+    </template>
+
+    <!--
+        This template should contains all the printable element of the Contract. This is the
+        template rendered in PDF with the report engine.
+    -->
+    <template id="contract_content" name="Contract Content">
+        <!-- Intro -->
+        <div id="contract_introduction" class="page-header mt16">
+            <h1>
+                <em t-esc="contract.name" />
+                <div t-ignore="true" class="pull-right css_editable_mode_hidden hidden-print">
+                    <ul class="list-inline">
+                        <li groups="sales_team.group_sale_salesman">
+                            <a class="btn btn-info"
+                               t-att-href="'/web#return_label=Website&amp;model=%s&amp;id=%s&amp;action=%s&amp;view_type=form' % (contract._name, contract.id, action)">
+                                Edit
+                            </a>
+                        </li>
+                        <li>
+                            <a class="btn btn-info" target="_blank" t-att-href="'/contract/%s' % contract.id +'?pdf=True'">Print</a>
+                        </li>
+                    </ul>
+                </div>
+            </h1>
+        </div>
+        <!-- Informations -->
+        <div class="row mt32">
+            <div class="col-md-6 col-xs-6">
+                <div class="row">
+                    <label class="col-sm-4 col-xs-4 text-right">Customer:</label>
+                    <div class="col-sm-8 col-xs-8">
+                        <div t-field="contract.partner_id" t-options='{
+                            "widget": "contact",
+                            "fields": ["address", "name", "phone"]
+                            }'/>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xs-6">
+                <div class="row">
+                    <div>
+                        <label class="col-sm-5 col-xs-5 text-right">Start Date:</label>
+                        <div class="col-sm-7 col-xs-7">
+                            <span t-field="contract.date_start" />
+                        </div>
+                    </div>
+                    <div class="clearfix" />
+                    <div>
+                        <label class="col-sm-5 col-xs-5 text-right">Repeat Every:</label>
+                        <div class="col-sm-7 col-xs-7">
+                            <span t-field="contract.recurring_interval" />
+                            <span t-field="contract.recurring_rule_type" />
+                        </div>
+                    </div>
+                    <div class="clearfix" />
+                    <div>
+                        <label class="col-sm-5 col-xs-5 text-right">Next Invoice:</label>
+                        <div class="col-sm-7 col-xs-7">
+                            <span t-field="contract.recurring_next_date" />
+                        </div>
+                    </div>
+                    <div class="clearfix" />
+                </div>
+            </div>
+        </div>
+        <!-- Pricing -->
+        <t t-call="website_portal_contract.contract_invoices" />
+        <!-- Descriptions -->
+        <div t-field="contract.website_template_id.website_description" class="oe_no_empty" />
+        <div class="oe_structure" />
+    </template>
+
+    <template id="contract_navigation_menu" name="Navigation Menu">
+        <div class="navspy" t-ignore="true" role="complementary">
+            <ul class="nav bs-sidenav" data-id="contract_sidebar">
+            </ul>
+        </div>
+    </template>
+
+    <template id="contract_chatter" name="Contract Comments" customize_show="True" inherit_id="website_portal_contract.website_contract">
+        <xpath expr="//div[@id='contract_page_content']" position="inside">
+            <section id="discussion" class="hidden-print">
+                <h1 class="page-header">History</h1>
+                <t t-call="website_mail.message_thread">
+                    <t t-set="object" t-value="contract" />
+                    <t t-set="chatter_mode" t-value="'json'" />
+                </t>
+            </section>
+        </xpath>
+    </template>
+
+    <!-- Template to edit the contract template with the website editor -->
+    <template id="website_contract_template" name="website_contract_template">
+        <t t-call="website.layout">
+            <body data-spy="scroll" data-target=".navspy" data-offset="50">
+                <div class="container o_website_quote">
+                    <div class="row mt16">
+                        <div class="col-md-3 hidden-print">
+                            <div class="bs-sidebar">
+                                <hr class="mt0 mb0" />
+                                <div class="navspy" role="complementary" t-ignore="True">
+                                    <ul class="nav bs-sidenav" data-id="contract_sidebar" />
+                                </div>
+                                <hr class="mt0 mb0" />
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row">
+                                <div t-ignore="true" class="css_editable_mode_hidden col-md-offset-11">
+                                    <a class="btn btn-info hidden-print"
+                                       t-att-href="'/web#return_label=Website&amp;model=%s&amp;id=%s&amp;action=%s&amp;view_type=form' % (template._name, template.id, request.env.ref('website_portal_contract.account_analytic_contract_template_action').id)">
+                                        Back
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="alert alert-info alert-dismissable" t-ignore="True">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&amp;times;</button>
+                                <p>
+                                    <strong>Template Header:</strong> this content
+                                    will appear on all contracts using this
+                                    template.
+                                </p>
+                                <p class="text-muted">
+                                    Titles with style <i>Heading 1</i> and
+                                    <i>Heading 2</i> will be used to generate the
+                                    table of content automatically.
+                                </p>
+                            </div>
+                            <section id="invoice_and_balance">
+                                <h1 class="page-header">Invoices &amp; Balance</h1>
+                                <p>
+                                    This section lists the contract invoices,
+                                    contract debit, credit, and balance.
+                                </p>
+                                <table class="table wq-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Quantity</th>
+                                            <th>UoM</th>
+                                            <th>Subtotal</th>
+                                            <th class="text-right">Debit</th>
+                                            <th class="text-right">Credit</th>
+                                            <th class="text-right">Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <span>Development Services</span>
+                                            </td>
+                                            <td>
+                                                <span>100.0</span>
+                                            </td>
+                                            <td>
+                                                <span>Hour(s)</span>
+                                            </td>
+                                            <td>
+                                                <span>8000.0</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td /><td /><td /><td />
+                                            <td class="text-right">
+                                                <span>8000.0</span>
+                                            </td>
+                                            <td class="text-right">
+                                                <span>8000.0</span>
+                                            </td>
+                                            <td class="text-right">
+                                                <strong><span>8000.0</span></strong>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </section>
+                            <div id="template_introduction" t-field="template.website_description" class="oe_no_empty" />
+                        </div>
+                    </div>
+                </div>
+            </body>
+        </t>
+    </template>
+
+    <template id="contract_invoices" name="Invoices">
+        <section id="invoice_and_balance">
+            <h1 class="page-header">Invoices &amp; Balance</h1>
+            <table class="table wq-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Quantity</th>
+                        <th>UoM</th>
+                        <th>Subtotal</th>
+                        <th class="text-right">Debit</th>
+                        <th class="text-right">Credit</th>
+                        <th class="text-right">Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="contract.recurring_invoice_line_ids" t-as="invoice">
+                        <tr>
+                            <td>
+                                <span t-field="invoice.display_name" />
+                            </td>
+                            <td>
+                                <span t-field="invoice.quantity" />
+                            </td>
+                            <td>
+                                <span t-field="invoice.uom_id" />
+                            </td>
+                            <td>
+                                <span t-field="invoice.price_subtotal" />
+                            </td>
+                        </tr>
+                    </t>
+                    <tr>
+                        <td /><td /><td /><td />
+                        <td class="text-right">
+                            <span t-field="contract.debit"
+                                  t-options='{"widget": "monetary", "display_currency": contract.currency_id}' />
+                        </td>
+                        <td class="text-right">
+                            <span t-field="contract.credit"
+                                  t-options='{"widget": "monetary", "display_currency": contract.currency_id}' />
+                        </td>
+                        <td class="text-right">
+                            <strong><span t-field="contract.balance"
+                                          t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></strong>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </template>
+
+</odoo>
